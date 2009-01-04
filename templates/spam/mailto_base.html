@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block head_title %}Tölvupóstföng og ruslpóstur &#124; {{ block.super }}{% endblock %}
+
+{% block content %}
+<h2>Ruslpóstur</h2>
+{% if email %}
+<p class="info">
+Þú hefur sannað dauðleika þinn sem maður og fengið leyfi til að senda póst á <a href="mailto:{{email}}">{{email}}</a>
+</p>
+{% else %}
+<p>Vinsamlegast svarið eftirfarandi spurningu til þess að sjá póstfangið. Þetta aukaskref er nauðsynlegt til þess að vernda okkur öll fyrir ruslpósti.</p>
+<form method="POST" action=".">
+    <fieldset>
+        <legend>Öryggisspurning</legend>
+        <ul>
+            <li>
+                <label>{{ question }}</label>
+                <input type="text" name="answer" value="" />
+            </li>
+        </ul>
+        <div>
+            <input type="hidden" name="id" value="{{ question.get_id }}" />
+            <input type="submit" value="Halda áfram" />
+        </div>
+    </fieldset>
+</form>
+{% endif %}
+{% endblock %}
