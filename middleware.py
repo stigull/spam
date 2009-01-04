@@ -7,7 +7,7 @@ from spam.settings import ENCODING
 MAILTO_REGEX = re.compile(r'\"mailto:(?P<email>[A-Za-z0-9._%-]+)@(?P<domain>[A-Za-z0-9._%-]+)\.(?P<country>[A-Za-z]{2,4})[^"]*\"')
 EMAIL_IN_BODY_REGEX = re.compile(r'(?P<email>[A-Za-z0-9._%-]+)@(?P<domain>[A-Za-z0-9._%-]+)\.(?P<country>[A-Za-z]{2,4})')
 
-class ObfusciateEmails(object):
+class ObfuscateEmails(object):
 
     def process_response(self, request, response):
         is_mailto_safe = request.path.startswith(reverse('spam-mailto-safe'))
@@ -15,7 +15,7 @@ class ObfusciateEmails(object):
         if not is_mailto_safe and 'text/html' in response['Content-Type']:
             response.content = MAILTO_REGEX.sub(encode_mail_to, response.content)
             response.content = EMAIL_IN_BODY_REGEX.sub(encode_email_in_body, response.content)
-            return response
+        return response
 
 def encode_mail_to(match):
     email = match.group('email')

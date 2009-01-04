@@ -1,7 +1,10 @@
 #coding: utf-8
+from urllib import urlencode
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 from spam.settings import ENCODING
 
@@ -9,10 +12,13 @@ from utils.djangoutils import XMLResponse
 
 class SecurityQuestion(object):
 
-    def __init__(self, question_id, question, anwser):
+    def __init__(self, question_id, question, answer):
         self.question_id = question_id
         self.question = question
         self.answer = answer
+
+    def is_correct_answer(self, answer):
+        return self.answer.lower().strip() == answer.lower().strip()
 
     def get_id(self):
         return self.question_id
@@ -32,22 +38,18 @@ class SecurityQuestionGenerator(object):
 
 
 def decode_email(request, encoded_email):
-    encoded_email, encoded_domain, encoded_country = encoded_email.split('+')
-    decoded_email = "%s@%s.%s" % (encoded_email.decode(ENCODING), encoded_domain.decode(ENCODING), encoded_country.decode(ENCODING))
-
-    question_generator = SecurityQuestionGenerator()
-
-    if request.is_ajax():
-        return XMLResponse('mailto_response.xml', {'email' : email, 'i' : int(request.GET['index'])})
-
     context = {}
+    question_generator = SecurityQuestionGenerator()
     if request.method == 'POST':
         security_question = question_generator.get_security_question(int(request.POST['id']))
-        if request.POST['answer'].strip() == security_question.answer:
+        if security_question.is_correct_answer(request.POST['answer']):
             #TODO: Senda með öryggisstreng
-            return HttpResponseRedirect("%s?email=%s" % (reverse('mailto-safe'), email))
+            encoded_email, encoded_domain, encoded_country = encoded_email.split("+")
+            parameters = {'encoded_email': encoded_email, 'encoded_domain': encoded_domain, 'encoded_country': encoded_country }
+            url = "%s?%s" % (reverse('spam-mailto-safe'), urlencode(parameters))
+            return HttpResponseRedirect(url)
         else:
-            return HttpResponseRedirect(request.path)
+            return HttpResponseRedirect(reverse('index'))
     else:
         context = {'question' : question_generator.get_random_security_question() }
     return render_to_response('spam/mailto_base.html', context , context_instance = RequestContext(request))
@@ -55,5 +57,17 @@ def decode_email(request, encoded_email):
 def show_email(request):
     context = {}
     if request.method == 'GET':
-        context['email'] = request.GET['email']
-        return render_to_response('spam/mailto_base.html', context , context_instance = RequestContext(request))
+        try:
+            encoded_email = request.GET['encoded_email']
+            encoded_domain = request.GET['encoded_domain']
+            encoded_country = request.GET['encoded_country']
+        except KeyError:
+            return HttpResponseRedirect(reverse('index'))
+        else:
+            decoded_email = "%s@%s.%s" % (encoded_email.decode(ENCODING), encoded_domain.decode(ENCODING),
+                                                encoded_country.decode(ENCODING))
+
+            context['email'] = decoded_email
+            return render_to_response('spam/mailto_base.html', context , context_instance = RequestContext(request))
+    else:
+        return HttpResponseRedirect(reverse('index'))
