@@ -41,5 +41,5 @@ def encode_mail_to(match):
     return '"%s" rel="nofollow" class="mailto"' % newpath
 
 def encode_email_in_body(match):
-    return "%s &#091;hjá&#093; %s &#091;punktur&#093; %s" % (match.group('email'), match.group('domain'), match.group('country'))
+    return "%s &#091;hjá/at&#093; %s &#091;punktur/dot&#093; %s" % (match.group('email'), match.group('domain'), match.group('country'))
 
